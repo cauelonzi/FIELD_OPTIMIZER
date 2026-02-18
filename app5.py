@@ -142,18 +142,32 @@ if st.session_state.optimized:
 
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    st.session_state.gdf_outer.plot(
-        ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
-    )
+   st.session_state.gdf_outer.plot(
+    ax=ax,
+    facecolor="none",      
+    edgecolor=JD_DARK,
+    linewidth=2.2,
+    zorder=1
+)
 
     if border_passes > 0:
         st.session_state.gdf_inner.plot(
-            ax=ax, edgecolor=JD_RED, linestyle="--", linewidth=1.5
-        )
+    ax=ax,
+    facecolor="none",      
+    edgecolor=JD_RED,
+    linestyle="--",
+    linewidth=1.4,
+    zorder=2
+)
 
     st.session_state.gdf_lines_opt.plot(
-        ax=ax, color=JD_YELLOW, linewidth=1.2, label="Linhas Otimizadas"
-    )
+    ax=ax,
+    color=JD_YELLOW,
+    linewidth=1.3,
+    zorder=3,
+    label="Otimizado"
+)
+
 
     ax.legend()
     ax.axis("off")
@@ -240,11 +254,22 @@ if st.session_state.optimized:
                 ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
             )
             st.session_state.gdf_inner.plot(
-                ax=ax, edgecolor=JD_RED, linestyle="--"
-            )
+    ax=ax,
+    facecolor="none",      # 🔑 sem preenchimento
+    edgecolor=JD_RED,
+    linestyle="--",
+    linewidth=1.4,
+    zorder=2
+)
+
             gdf_user.plot(
-                ax=ax, color=JD_GREEN, linewidth=1.1, label="Atual"
-            )
+    ax=ax,
+    color=JD_GREEN,
+    linewidth=1.2,
+    zorder=3,
+    label="Atual"
+)
+
             ax.legend()
             ax.axis("off")
             st.pyplot(fig)
@@ -256,14 +281,22 @@ if st.session_state.optimized:
                 ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
             )
             st.session_state.gdf_inner.plot(
-                ax=ax, edgecolor=JD_RED, linestyle="--"
-            )
+    ax=ax,
+    facecolor="none",      # 🔑 sem preenchimento
+    edgecolor=JD_RED,
+    linestyle="--",
+    linewidth=1.4,
+    zorder=2
+)
+
             st.session_state.gdf_lines_opt.plot(
-                ax=ax, color=JD_YELLOW, linewidth=1.2, label="Otimizado"
-            )
-            ax.legend()
-            ax.axis("off")
-            st.pyplot(fig)
+    ax=ax,
+    color=JD_YELLOW,
+    linewidth=1.3,
+    zorder=3,
+    label="Otimizado"
+)
+
 
         st.markdown("### Comparação Sobreposta")
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -275,8 +308,13 @@ if st.session_state.optimized:
             ax=ax, edgecolor=JD_RED, linestyle="--"
         )
         gdf_user.plot(
-            ax=ax, color=JD_GREEN, linewidth=1, label="Atual"
-        )
+    ax=ax,
+    color=JD_GREEN,
+    linewidth=1.2,
+    zorder=3,
+    label="Atual"
+)
+
         st.session_state.gdf_lines_opt.plot(
             ax=ax, color=JD_YELLOW, linewidth=1.2, label="Otimizado"
         )
@@ -284,5 +322,6 @@ if st.session_state.optimized:
         ax.legend()
         ax.axis("off")
         st.pyplot(fig)
+
 
 
