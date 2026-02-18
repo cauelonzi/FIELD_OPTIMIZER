@@ -9,7 +9,8 @@ numpy
 pandas
 matplotlib
 streamlit-folium
-pip install reportlab
+
+
 
 
 
