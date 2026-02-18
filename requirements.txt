@@ -8,7 +8,8 @@ fiona
 numpy
 pandas
 matplotlib
-pip install streamlit geopandas shapely matplotlib folium streamlit-folium
+streamlit-folium
 pip install reportlab
-pip install streamlit shapely geopandas numpy reportlab
-pip install fpdf2
+
+
+
