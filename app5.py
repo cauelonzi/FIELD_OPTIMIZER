@@ -20,11 +20,10 @@ st.title("🚜 Otimizador de Linhas de Plantio — Engenharia & ROI")
 # =====================================================
 # PALETA JOHN DEERE
 # =====================================================
-JD_GREEN = "#367C2B"
-JD_YELLOW = "#FFDE00"
-JD_DARK = "#1F2A1F"
-JD_LIGHT = "#9DC183"
-JD_RED = "#C0392B"
+JD_GREEN = "#367C2B"     # Linhas atuais
+JD_YELLOW = "#FFDE00"   # Linhas otimizadas
+JD_DARK = "#1F2A1F"     # Contorno talhão
+JD_RED = "#C0392B"      # Bordadura
 
 # =====================================================
 # SESSION STATE
@@ -49,7 +48,7 @@ if st.sidebar.button("🆕 Novo Talhão"):
     st.rerun()
 
 # =====================================================
-# SIDEBAR — PARÂMETROS GEOMÉTRICOS
+# SIDEBAR — PARÂMETROS
 # =====================================================
 st.sidebar.header("⚙️ Parâmetros Geométricos")
 
@@ -110,27 +109,24 @@ if polygon is not None:
             )
         )
 
-        distance_opt = gdf_lines_opt.length.sum() / 1000
-        maneuvers_opt = passes_opt - 1
-
         st.session_state.update({
             "optimized": True,
             "angle_opt": angle_opt,
             "ab_angle": angle_opt % 180,
             "passes_opt": passes_opt,
-            "maneuvers_opt": maneuvers_opt,
-            "distance_opt": distance_opt,
+            "maneuvers_opt": passes_opt - 1,
+            "distance_opt": gdf_lines_opt.length.sum() / 1000,
             "gdf_lines_opt": gdf_lines_opt,
             "gdf_outer": gdf_outer,
             "gdf_inner": gdf_inner
         })
 
 # =====================================================
-# RESULTADO — ETAPA 1
+# RESULTADOS — ENGENHARIA
 # =====================================================
 if st.session_state.optimized:
 
-    st.subheader("🧭 Etapa 1 — Melhor Ângulo de Plantio (Engenharia)")
+    st.subheader("🧭 Etapa 1 — Melhor Ângulo de Plantio")
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Ângulo geométrico", f"{st.session_state.angle_opt:.2f}°")
@@ -142,32 +138,31 @@ if st.session_state.optimized:
 
     fig, ax = plt.subplots(figsize=(8, 8))
 
-   st.session_state.gdf_outer.plot(
-    ax=ax,
-    facecolor="none",      
-    edgecolor=JD_DARK,
-    linewidth=2.2,
-    zorder=1
-)
+    st.session_state.gdf_outer.plot(
+        ax=ax,
+        facecolor="none",
+        edgecolor=JD_DARK,
+        linewidth=2.2,
+        zorder=1
+    )
 
     if border_passes > 0:
         st.session_state.gdf_inner.plot(
-    ax=ax,
-    facecolor="none",      
-    edgecolor=JD_RED,
-    linestyle="--",
-    linewidth=1.4,
-    zorder=2
-)
+            ax=ax,
+            facecolor="none",
+            edgecolor=JD_RED,
+            linestyle="--",
+            linewidth=1.4,
+            zorder=2
+        )
 
     st.session_state.gdf_lines_opt.plot(
-    ax=ax,
-    color=JD_YELLOW,
-    linewidth=1.3,
-    zorder=3,
-    label="Otimizado"
-)
-
+        ax=ax,
+        color=JD_YELLOW,
+        linewidth=1.3,
+        zorder=3,
+        label="Otimizado"
+    )
 
     ax.legend()
     ax.axis("off")
@@ -184,9 +179,7 @@ if st.session_state.optimized:
 
     with col1:
         angle_user = float(st.text_input("Ângulo AB atual (°)", "90"))
-        maneuver_time_sec = float(
-            st.text_input("Tempo médio de manobra (segundos)", "30")
-        )
+        maneuver_time_sec = float(st.text_input("Tempo médio de manobra (s)", "30"))
 
     with col2:
         speed_kmh = float(st.text_input("Velocidade média (km/h)", "6"))
@@ -211,117 +204,27 @@ if st.session_state.optimized:
 
         gdf_user = gerar_linhas(polygon, angle_user)
 
-        passes_user = len(gdf_user)
-        maneuvers_user = passes_user - 1
-
         dist_user = gdf_user.length.sum() / 1000
-        dist_opt = st.session_state.distance_opt
-
         maneuver_h = maneuver_time_sec / 3600
 
-        time_user = (dist_user / speed_kmh) + maneuvers_user * maneuver_h
-        time_opt = (dist_opt / speed_kmh) + st.session_state.maneuvers_opt * maneuver_h
+        time_user = (dist_user / speed_kmh) + (len(gdf_user) - 1) * maneuver_h
+        time_opt = (st.session_state.distance_opt / speed_kmh) + st.session_state.maneuvers_opt * maneuver_h
 
-        liters_user = time_user * consumption_lh
-        liters_opt = time_opt * consumption_lh
-
-        cost_user = liters_user * diesel_price
-        cost_opt = liters_opt * diesel_price
-
-        st.subheader("📊 Comparativo Técnico")
-
-        st.dataframe({
-            "Cenário": ["Atual", "Otimizado"],
-            "Ângulo AB (°)": [angle_user % 180, st.session_state.ab_angle],
-            "Passadas": [passes_user, st.session_state.passes_opt],
-            "Manobras": [maneuvers_user, st.session_state.maneuvers_opt],
-            "Distância (km)": [dist_user, dist_opt],
-            "Tempo total (h)": [time_user, time_opt],
-            "Consumo (L)": [liters_user, liters_opt],
-            "Custo (R$)": [cost_user, cost_opt]
-        }, use_container_width=True)
+        cost_user = time_user * consumption_lh * diesel_price
+        cost_opt = time_opt * consumption_lh * diesel_price
 
         st.metric("💰 Economia estimada", f"R$ {cost_user - cost_opt:,.2f}")
 
-        st.subheader("🗺️ Visualização dos Cenários")
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.markdown("### Cenário Atual")
-            fig, ax = plt.subplots()
-            st.session_state.gdf_outer.plot(
-                ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
-            )
-            st.session_state.gdf_inner.plot(
-    ax=ax,
-    facecolor="none",      # 🔑 sem preenchimento
-    edgecolor=JD_RED,
-    linestyle="--",
-    linewidth=1.4,
-    zorder=2
-)
-
-            gdf_user.plot(
-    ax=ax,
-    color=JD_GREEN,
-    linewidth=1.2,
-    zorder=3,
-    label="Atual"
-)
-
-            ax.legend()
-            ax.axis("off")
-            st.pyplot(fig)
-
-        with c2:
-            st.markdown("### Cenário Otimizado")
-            fig, ax = plt.subplots()
-            st.session_state.gdf_outer.plot(
-                ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
-            )
-            st.session_state.gdf_inner.plot(
-    ax=ax,
-    facecolor="none",      # 🔑 sem preenchimento
-    edgecolor=JD_RED,
-    linestyle="--",
-    linewidth=1.4,
-    zorder=2
-)
-
-            st.session_state.gdf_lines_opt.plot(
-    ax=ax,
-    color=JD_YELLOW,
-    linewidth=1.3,
-    zorder=3,
-    label="Otimizado"
-)
-
-
-        st.markdown("### Comparação Sobreposta")
         fig, ax = plt.subplots(figsize=(8, 8))
 
-        st.session_state.gdf_outer.plot(
-            ax=ax, edgecolor=JD_DARK, linewidth=2, facecolor="none"
-        )
-        st.session_state.gdf_inner.plot(
-            ax=ax, edgecolor=JD_RED, linestyle="--"
-        )
-        gdf_user.plot(
-    ax=ax,
-    color=JD_GREEN,
-    linewidth=1.2,
-    zorder=3,
-    label="Atual"
-)
+        st.session_state.gdf_outer.plot(ax=ax, facecolor="none", edgecolor=JD_DARK, linewidth=2)
+        st.session_state.gdf_inner.plot(ax=ax, facecolor="none", edgecolor=JD_RED, linestyle="--")
 
-        st.session_state.gdf_lines_opt.plot(
-            ax=ax, color=JD_YELLOW, linewidth=1.2, label="Otimizado"
-        )
+        gdf_user.plot(ax=ax, color=JD_GREEN, linewidth=1.2, label="Atual", zorder=2)
+        st.session_state.gdf_lines_opt.plot(ax=ax, color=JD_YELLOW, linewidth=1.3, label="Otimizado", zorder=3)
 
         ax.legend()
         ax.axis("off")
         st.pyplot(fig)
-
 
 
